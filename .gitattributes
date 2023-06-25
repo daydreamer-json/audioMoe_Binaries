@@ -26,6 +26,7 @@
 *.m4s binary -delta
 *.mpeg binary -delta
 *.mpkg binary -delta
+*.mkv binary -delta
 *.oga binary -delta
 *.ogg binary -delta
 *.ogv binary -delta
