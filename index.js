@@ -19,6 +19,10 @@ logger.debug('Loaded module: sqlite3');
 logger.debug(`Process RAM usage: ${formatFileSize(process.memoryUsage().rss)}`);
 logger.info('All modules have been loaded. Initialization is complete');
 
+const CONFIG = {
+  "apiBaseUrl": "https://api.asmr-200.com/api"
+};
+
 function formatFileSize (bytes, decimals = 2) {
   if (bytes === 0) return '0 byte';
   const k = 1024;
@@ -56,8 +60,7 @@ function mergeWorkPagedJsonToIntegratedJson () {
         pagedFileNameList_willIntegrate = pagedFileNameList;
       } else {
         isLastFileEntryFilled = false;
-        // pagedFileNameList_willIntegrate = pagedFileNameList.splice(-1);
-        pagedFileNameList_willIntegrate = pagedFileNameList;
+        pagedFileNameList_willIntegrate = pagedFileNameList.splice(-1);
       }
       let integratedArray = new Array();
       let promises = new Array();
@@ -79,7 +82,11 @@ function mergeWorkPagedJsonToIntegratedJson () {
       Promise.all(promises)
         .then(() => {
           logger.info(`${integratedArray.length} paged JSON entries were integrated`);
-          fs.writeFile(`${path.join(__dirname, 'db/works/', 'integrated.json')}`, JSON.stringify(integratedArray), {flag: 'w'}, (err) => {
+          fs.writeFile(`${path.join(__dirname, 'db/works/', 'integrated.json')}`, JSON.stringify({
+            "works": integratedArray,
+            "totalEntry": integratedArray.length,
+            "totalPage": pagedFileNameList_willIntegrate.length
+          }), {flag: 'w'}, (err) => {
             if (err) throw err;
             logger.info(`Integrated JSON was written to ${path.join(__dirname, 'db/works/paged/', 'integrated.json')}`);
             logger.info(`Everything is OK`);
@@ -91,6 +98,80 @@ function mergeWorkPagedJsonToIntegratedJson () {
   });
 }
 
+/*
+    console.log(data.works.map((obj) => obj.id).sort((a, b) => a - b));
+*/
+
+function createDBWorkFolder () {
+  /*
+  こういうフォルダを生成するためのスクリプトです。
+  db/work/workInfo/2022/01/01/
+  db/work/tracks/2022/01/01/
+  */
+  fs.readFile(`${path.join(__dirname, 'db/works/', 'integrated.json')}`, 'utf8', function (err, dataRaw) {
+    if (err) throw err;
+    let data = JSON.parse(dataRaw);
+    let createDateArrNotCleaned = data.works.map((obj) => obj.create_date);
+    let createDateArr = Array.from(new Set(createDateArrNotCleaned));
+    let promises = new Array();
+    createDateArr.forEach((obj) => {
+      let date = new Date(obj);
+      let dateYear = date.getFullYear().toString();
+      let dateMonth = zeroPadding(date.getMonth() + 1, 2);
+      let dateDate = zeroPadding(date.getDate(), 2);
+      promises.push(
+        new Promise ((resolve) => {
+          fs.mkdir(`${path.join(__dirname, 'db/work/workInfo/', dateYear, dateMonth, dateDate)}`, {recursive: true}, (err) => {
+            if (err) throw err;
+            fs.mkdir(`${path.join(__dirname, 'db/work/tracks/', dateYear, dateMonth, dateDate)}`, {recursive: true}, (err) => {
+              if (err) throw err;
+              console.log(path.join(__dirname, 'db/work/workInfo/', dateYear, dateMonth, dateDate));
+              resolve();
+            });
+          });
+        })
+      );
+    });
+    Promise.all(promises)
+      .then(() => {
+        logger.info(`Everything is OK`);
+        clearInterval(maxMemoryUsageCounter_TimerID);
+        logger.debug(`Max Process RAM usage: ${formatFileSize(maxMemoryUsage, 2)}`);
+      });
+  });
+}
+
+function outputDBWorkInfoJsonDownloadScriptBat (yearStart, yearEnd) {
+  fs.readFile(`${path.join(__dirname, 'db/works/', 'integrated.json')}`, 'utf8', function (err, dataRaw) {
+    if (err) throw err;
+    let data = JSON.parse(dataRaw);
+    let filteredData = data.works.filter((obj) => {
+      let date = new Date(obj.create_date);
+      return date.getFullYear() >= yearStart && date.getFullYear() <= yearEnd;
+    });
+    let outputBatArray = new Array();
+    let outputBatInitializationScript = ``;
+    filteredData.forEach((obj) => {
+      let date = new Date(obj.create_date);
+      let commandSubArray = new Array();
+      commandSubArray.push(`${CONFIG.apiBaseUrl}/workInfo/${obj.id}`);
+      commandSubArray.push(`  dir=${path.join(__dirname, 'db/work/workInfo/', date.getFullYear().toString(), zeroPadding(date.getMonth() + 1, 2), zeroPadding(date.getDate(), 2))}`);
+      commandSubArray.push(`  out=${obj.id}.json`);
+      commandSubArray.push(`${CONFIG.apiBaseUrl}/tracks/${obj.id}`);
+      commandSubArray.push(`  dir=${path.join(__dirname, 'db/work/tracks/', date.getFullYear().toString(), zeroPadding(date.getMonth() + 1, 2), zeroPadding(date.getDate(), 2))}`);
+      commandSubArray.push(`  out=${obj.id}.json`);
+      outputBatArray.push(commandSubArray.join('\r\n'));
+    });
+    fs.writeFile(`${path.join(__dirname, 'DBWorkInfoJsonDownloadAria2c.txt')}`, outputBatArray.join('\r\n'), {flag: 'w'}, (err) => {
+      if (err) throw err;
+      logger.info(`Execute it ==> aria2c -x16 -s1 -j16 --auto-file-renaming=false --deferred-input --connect-timeout=15 --timeout=15 -i "DBWorkInfoJsonDownloadAria2c.txt"`);
+      logger.info(`Everything is OK`);
+      clearInterval(maxMemoryUsageCounter_TimerID);
+      logger.debug(`Max Process RAM usage: ${formatFileSize(maxMemoryUsage, 2)}`);
+    });
+  });
+}
+
 // ========== Argument processing ==========
 
 if (arg.length === 0) {
@@ -98,5 +179,9 @@ if (arg.length === 0) {
 } else {
   if (arg[0] === 'mergeWorkPagedJsonToIntegratedJson') {
     mergeWorkPagedJsonToIntegratedJson();
+  } else if (arg[0] === 'createDBWorkFolder') {
+    createDBWorkFolder();
+  } else if (arg[0] === 'outputDBWorkInfoJsonDownloadScriptBat') {
+    outputDBWorkInfoJsonDownloadScriptBat(arg[1], arg[2]);
   }
 }
