@@ -94,6 +94,7 @@ function mergeWorkPagedJsonToIntegratedJson () {
 // ========== Argument processing ==========
 
 if (arg.length === 0) {
+  // nothing
 } else {
   if (arg[0] === 'mergeWorkPagedJsonToIntegratedJson') {
     mergeWorkPagedJsonToIntegratedJson();
