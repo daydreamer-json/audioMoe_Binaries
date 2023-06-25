@@ -16,4 +16,4 @@ This is the main branch where all branch descriptions are located. It also store
 
 ### [database](https://github.com/daydreamer-json/audioMoe_Binaries/tree/database) branch
 
-This branch stores various database files.
+This branch stores various database files. It also includes scripts to manage, inspect, convert, and generate databases.
