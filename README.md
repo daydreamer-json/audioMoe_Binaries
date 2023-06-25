@@ -2,6 +2,6 @@
 
 This repository contains a large set of audio resources.
 
-## Precautions
+## `database` branch
 
-It is available for **educational and research purposes only.** Please handle files with care.
+This branch stores various database files.
