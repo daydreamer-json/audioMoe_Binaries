@@ -1,0 +1,28 @@
+{
+  "name": "audiomoe_binaries",
+  "version": "0.0.1",
+  "description": "This repository contains a large set of audio resources.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daydreamer-json/audioMoe_Binaries.git"
+  },
+  "author": "daydreamer-json",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/daydreamer-json/audioMoe_Binaries/issues"
+  },
+  "homepage": "https://github.com/daydreamer-json/audioMoe_Binaries#readme",
+  "dependencies": {
+    "child_process": "^1.0.2",
+    "eslint": "^8.43.0",
+    "fs": "^0.0.1-security",
+    "log4js": "^6.9.1",
+    "path": "^0.12.7",
+    "request": "^2.88.2",
+    "sqlite3": "^5.1.6"
+  }
+}

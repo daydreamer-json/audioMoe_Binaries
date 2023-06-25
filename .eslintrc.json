@@ -1,0 +1,13 @@
+{
+  "extends": ["eslint:recommended"],
+  "plugins": [],
+  "parserOptions": {},
+  "env": {
+    "node": true,
+    "es2022": true
+  },
+  "globals": {},
+  "rules": {
+    "semi": "error"
+  }
+}
